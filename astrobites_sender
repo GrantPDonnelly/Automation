@@ -1,0 +1,36 @@
+from urllib.request import urlopen
+import re
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import datetime
+import time
+
+port = 465
+email = 'python.updater500@gmail.com'
+password = input('enter password: ')
+receivers = ['python.updater500@gmail.com']
+
+while True:
+    astrobites_url = 'https://astrobites.org/category/daily-paper-summaries'
+    astrobites_page = urlopen(astrobites_url)
+    html = astrobites_page.read().decode('utf-8')
+    article1_start = html.find('<h2>')
+    article1_end = html.find('</h2>')
+    article_html = html[article1_start:article1_end]
+    link = re.findall('"([^"]*)"', article_html)[0]
+
+    context = ssl.create_default_context()
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Daily Astrobites Article "+str(datetime.datetime.now())[0:10]
+    message["From"] = email
+
+    text = "Good morning, here is your daily astrobites article:\n\n"+link
+    message.attach(MIMEText(text, "plain"))
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', port, context=context) as server:
+        server.login(email, password)
+        server.sendmail(email, receivers, message.as_string())
+        print("sent article at "+str(datetime.datetime.now()))
+
+    time.sleep(86400)
